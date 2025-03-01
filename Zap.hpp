@@ -4,6 +4,13 @@
 #include "zap_arg_parser.hpp"
 #include "zap_helpers.hpp"
 
+#define ZAP_PARSE_ARGS(str, len) \
+  ZAP_PARSE_ARGS_EX(args, arg, str, len)
+
+#define ZAP_PARSE_ARGS_EX(parserVar, argVar, str, len) \
+  zap::ArgParser parserVar(str, len); \
+  zap::Arg argVar
+
 namespace zap {
 
 const uint8_t FRAME_TYPE_BINARY = 1;
@@ -21,16 +28,23 @@ public:
 
 class Protocol {
 public:
-  Protocol(HardwareSerial *port, char *rxBuffer, int rxBufferSize, char *txBuffer, int txBufferSize)
+  Protocol(HardwareSerial *port, char *rxBuffer, int rxBufferSize, char *txBuffer, int txBufferSize, const IndifferentString deviceInfo)
     : port_(port)
     , rxBuffer_(rxBuffer), rxBufferSize_(rxBufferSize)
     , txBuffer_(txBuffer), txBufferSize_(txBufferSize)
+    , deviceInfo_(deviceInfo)
     , rxState_(0), rxWp_(0)
     , reportInterval_(0), nextReportAt_(0), reportStreams_(0) {
     for (int i = 0; i < 15; i++) {
       streams_[i] = nullptr;
     }
   }
+
+  Protocol(HardwareSerial *port, char *rxBuffer, int rxBufferSize, char *txBuffer, int txBufferSize, const char *deviceInfo)
+    : Protocol(port, rxBuffer, rxBufferSize, txBuffer, txBufferSize, IndifferentString(deviceInfo)) {}
+
+  Protocol(HardwareSerial *port, char *rxBuffer, int rxBufferSize, char *txBuffer, int txBufferSize, const __FlashStringHelper *deviceInfo)
+    : Protocol(port, rxBuffer, rxBufferSize, txBuffer, txBufferSize, IndifferentString(deviceInfo)) {}
 
   void init() {
     port_->begin(115200);
@@ -41,10 +55,6 @@ public:
   }
 
   inline HardwareSerial* port() const { return port_; }
-
-  void setDeviceInfo(const IndifferentString deviceInfo) { deviceInfo_ = deviceInfo; }
-  void setDeviceInfo(const char *deviceInfo) { deviceInfo_ = IndifferentString(deviceInfo); }
-  void setDeviceInfo(const __FlashStringHelper *deviceInfo) { deviceInfo_ = IndifferentString(deviceInfo); }
 
   void setStreamHandler(int id, Stream *handler) {
     if (id < 1 || id > 15) return;
