@@ -1,5 +1,99 @@
 # zap protocol
 
+Zap is a text-based protocol allowing multiple independent _streams_ to be multiplexed
+through a single serial link. Each stream on a Zap-enabled device supports 
+
+## Example Session
+
+A Zap device is identified by sending a `hello` message to the Control Stream.
+It will reply with device information.
+
+```
+0<hello
+0>hello name:"Example Device" vendor:"stp" id:"com.sixtrickpony.example" version:"1.1"
+```
+
+Next we inquire about the streams:
+
+```
+0<streams
+0>streams 1
+```
+
+The response indicates there's a single stream with ID `1`. We send a `desc` request to
+find out more about it:
+
+```
+0<desc 1
+0>desc 1 name:adc class:sensor values:[adc] min:0 max:1023
+```
+
+Because the strem is a `sensor` we know it understands the `read` command to get the
+current sensor value (note that we're sending this message to stream ID `1`)
+
+```
+1<read
+1>read 500
+```
+
+We can enable periodic reports from this stream by sending a `report on` message to the
+control stream, followed by the IDs of the streams for which we want to enable reporting.
+This example will cause the device to send reports from stream `1` every 100ms.
+
+```
+0<report on 100 1
+0>report on
+1!report 490
+1!report 495
+1!report 520
+```
+
+Note that the reports have a message type of `!` - this indicates an "unsolicited" message;
+that is, one that was not sent in direct response to a request.
+
+The reports continue until disabled by a `report off` message:
+
+```
+0<report off
+0>report off
+```
+
+## Standard Success/Error Responses
+
+`ok` is the generic success response and never has any additional arguments:
+
+```
+>ok
+```
+
+Error responses begin with the positional argument `error` followed immediately by the
+error ID, which should be a symbol. Errors may optionally include an integer `code` and
+a string `message`.
+
+```
+>error $error-id
+>error $error-id code:123
+>error $error-id message:"invalid argument"
+```
+
+## Common Error IDs
+
+TODO
+
+
+
+
+
+## Protocol Description
+
+Frames are newline-delimited ASCII.
+
+
+
+
+Each stream operates in a request/response 
+
+
 ## Protocol
 
 Frames are newline-delimited ASCII.
