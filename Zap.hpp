@@ -215,7 +215,11 @@ private:
         if (streams_[id-1] == nullptr) continue;
         if (!first) port_->write(' ');
         first = false;
-        port_->write('0' + id);
+        if (id <= 9) {
+          port_->write('0' + id);  
+        } else {
+          port_->write('A' + id - 10);  
+        }
       }
     } else if (strcmp("desc", data) == 0) {
       if (!p.scanInt(&arg)) {
@@ -226,7 +230,7 @@ private:
           err = 4;
         } else {
           port_->print("desc ");
-          port_->print(arg.I, DEC);
+          port_->print(arg.I, HEX);
           port_->print(' ');
           stream->describe(this);
         }
