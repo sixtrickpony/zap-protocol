@@ -199,12 +199,13 @@ a.much.longer/symbol!
 
 # Multiple values, positional
 foo bar 1 2 3 a/symbol "this is a string"
+1 2 3 [ this is a [ nested list ] ] ok? 
 
 # Multiple values, named
 min:100 max: 23
 
 # Multiple values, positional + named
-set config min:100 max:200 interval:350 enabled:true
+set config min:100 max:200 interval:350 enabled:true values: [1 2 3 ]
 ```
 
 ---
