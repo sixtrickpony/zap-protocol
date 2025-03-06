@@ -93,12 +93,7 @@ TODO
 
 ## Protocol Description
 
-Frames are newline-delimited ASCII.
 
-
-
-
-Each stream operates in a request/response 
 
 
 ## Protocol
@@ -140,6 +135,77 @@ Values can be:
   - Float
   - String: either a bare word matching the regex `[a-zA-Z_][a-zA-Z0-9_-]*` (that isn't an otherwise reserved word), or a double-quoted string.
   - A nested argument list, enclosed in `[` and `]` braces; the contents follow the same rules for positional and named arguments.
+
+---
+
+# Protocol Format
+
+Frames are newline-delimited ASCII and each adheres to the format:
+
+```
+<stream-id><frame-type-marker><binary-indicator?><body>\n
+```
+
+Wherein:
+
+  - `stream-id` is a hex digit in the range `0-F`, indicating the source or destination stream
+  - `frame-type-marker` is one of:
+    - `<`: host to device request
+    - `>`: device to host response
+    - `!`  device to host notification
+  - `binary-indicator`: `#`
+
+If the binary indicator is present, `body` must be interpreted as hex-encoded binary.
+
+Otherwise, `body` is parsed as a message in the form of an _argument list_.
+
+## Argument Lists
+
+Argument lists are space-separated lists of values; supported simple types are:
+
+  - `Boolean`: `on`, `yes`, `true`, `off`, `no`, `false`
+  - `Integer` (inc. hex-encoded): e.g. `123`, `-20`, `0`, `0xFF`
+  - `Float`: e.g. `0.0`, `4.2`, `-123.5`
+  - `String`, of which there are two flavours;
+    - `Symbol`: matching the regex `[a-zA-Z_][a-zA-Z0-9_./?!-]*`, excluding otherwise
+      reserved words (i.e. `Boolean` values)
+    - `Quoted String`: any string inside double-qoutes e.g. `"hello there"`
+
+Arguments may be **positional** or **named**. Where an argument list contains both,
+all positional arguments must proceed named arguments. Named arguments follow the 
+form `<name>:<space*><value>`, where `name` is any valid `Symbol`.
+
+Argument lists may be nested by enclosing them in `[` and `]` braces; a nested list 
+may appear anywhere where value is, and contents follow the same rules with regards
+to positional and named arguments.
+
+**Note:** the current Arduino reference implementation does not support parsing
+nested argument lists. Indeed, it is recommended that consumption of nested lists
+be avoided on the device/firmware side to reduce parsing complexity and memory
+requirements. Producing nested lists on the device for consumption by the host
+is of course OK, and fully supported by the Python client library.
+
+### Example Argument Lists
+
+```
+# Single values
+true
+180
+5.7
+a_symbol
+another-symbol
+a.much.longer/symbol!
+"this is a quoted string, it can contain spaces"
+
+# Multiple values, positional
+foo bar 1 2 3 a/symbol "this is a string"
+
+# Multiple values, named
+min:100 max: 23
+
+# Multiple values, positional + named
+set config min:100 max:200 interval:350 enabled:true
+```
 
 ---
 
@@ -238,7 +304,7 @@ Disable reporting.
   - `max`: maximum value
   - `units`: units
 
-`min`, `max`, and `units` maybe be scalars (`integer` or `float`) or positional lists of the same. Scalar values mean the same value applies 
+`min`, `max`, and `units` maybe be scalars (`integer` or `float`) or positional lists of the same. Scalars indicate that the same 
 
 ### `read`
 

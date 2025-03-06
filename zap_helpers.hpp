@@ -31,11 +31,11 @@ uint8_t decodeHexit(char ch) {
 }
 
 bool isWordStartChar(char ch) {
-  return isAlpha(ch) || ch == '_' || ch == '!';
+  return isAlpha(ch) || ch == '_';
 }
 
 bool isWordTailChar(char ch) {
-  return isAlpha(ch) || isNumeric(ch) || ch == '_' || ch == '.' || ch == '/' || ch == '?' || ch == '!';
+  return isAlpha(ch) || isNumeric(ch) || ch == '_' || ch == '.' || ch == '/' || ch == '?' || ch == '!' || ch == '-';
 }
 
 class IndifferentString {
