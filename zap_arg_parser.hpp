@@ -1,17 +1,15 @@
 #pragma once
 
-#include "zap_helpers.hpp"
-
 namespace zap {
 
-#define TOK_ERROR         -1
-#define TOK_WORD          1
-#define TOK_STRING        2
-#define TOK_KEY           3
-#define TOK_INT           4
-#define TOK_HEX           5
-#define TOK_FLOAT         6
-#define TOK_BOOL          7
+#define TOK_ERROR -1
+#define TOK_WORD 1
+#define TOK_STRING 2
+#define TOK_KEY 3
+#define TOK_INT 4
+#define TOK_HEX 5
+#define TOK_FLOAT 6
+#define TOK_BOOL 7
 
 struct Arg {
   int index;
@@ -28,15 +26,13 @@ struct Arg {
 };
 
 class ArgParser {
-public:
-  ArgParser(char *args, int len)
-    : args_(args), len_(len), rp_(0)
-  {
-    skipSpace();
-  }
+ public:
+  ArgParser(char *args, int len) : args_(args), len_(len), rp_(0) { skipSpace(); }
 
   bool remain() const { return rp_ < len_; }
   bool end() const { return !remain(); }
+
+  bool next(Arg *dst) { return lex(dst) != TOK_ERROR; }
 
   bool scanWord(Arg *dst) {
     char tok = lex(dst);
@@ -58,7 +54,7 @@ public:
     return tok == TOK_BOOL;
   }
 
-private:
+ private:
   char lex(Arg *dst) {
     char ch = curr();
     if (isAlpha(ch)) {
@@ -91,14 +87,13 @@ private:
 
     char tok;
 
-    if ((len == 2 && strCmp(text, "on", 2))
-        || (len == 3 && strCmp(text, "yes", 3))
-        || (len == 4 && strCmp(text, "true", 4))) {
+    if ((len == 2 && strCmp(text, "on", 2)) || (len == 3 && strCmp(text, "yes", 3)) ||
+        (len == 4 && strCmp(text, "true", 4))) {
       dst->B = true;
       tok = TOK_BOOL;
-    } else if ((len == 3 && strCmp(text, "off", 3))
-                || (len == 2 && strCmp(text, "no", 2))
-                || (len == 5 && strCmp(text, "false", 5))) {
+    } else if ((len == 3 && strCmp(text, "off", 3)) ||
+               (len == 2 && strCmp(text, "no", 2)) ||
+               (len == 5 && strCmp(text, "false", 5))) {
       dst->B = false;
       tok = TOK_BOOL;
     } else if (curr() == ':') {
@@ -112,7 +107,7 @@ private:
     }
 
     skipSpace();
-    
+
     return tok;
   }
 
@@ -157,7 +152,7 @@ private:
   // Read the next word (naked string).
   // If the word is valid, returns start pointer and stores length in len.
   // If invalid, returns a null pointer.
-  char* lexWord(int *len) {
+  char *lexWord(int *len) {
     int start = rp_;
 
     if (!isWordStartChar(curr())) {
@@ -166,7 +161,7 @@ private:
 
     adv();
 
-    while (isWordTailChar(curr())) {
+    while (isWordChar(curr())) {
       adv();
     }
 
@@ -212,7 +207,7 @@ private:
   }
 
   inline char curr() { return args_[rp_]; }
-  inline char peek() { return args_[rp_+1]; }
+  inline char peek() { return args_[rp_ + 1]; }
   inline void adv() { rp_++; }
 
   char *args_;
@@ -220,4 +215,4 @@ private:
   int rp_;
 };
 
-}
+}  // namespace zap

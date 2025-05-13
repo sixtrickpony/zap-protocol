@@ -42,7 +42,7 @@ This example will cause the device to send reports from stream `1` every 100ms.
 
 ```
 0<report on 100 1
-0>report on
+0>ok
 1!report 490
 1!report 495
 1!report 520
@@ -55,7 +55,7 @@ The reports continue until disabled by a `report off` message:
 
 ```
 0<report off
-0>report off
+0>ok
 ```
 
 ## Standard Success/Error Responses
@@ -265,7 +265,7 @@ Enable reporting for all streams at 1s interval:
 
 ```
 0<report on 1000
-0>report on
+0>ok
 ... 1s passes ...
 1!report 100
 ... 1s passes ...
@@ -276,7 +276,7 @@ Enable reporting for streams `2`, `6`, and `C`, at a 250ms interval:
 
 ```
 0<report on 250 2 6 C
-0>report on
+0>ok
 ... 250ms passes ...
 2!report a b c
 6!report 100
@@ -293,7 +293,7 @@ Disable reporting.
 
 ```
 0<report off
-0>report off
+0>ok
 ```
 
 ## `sensor` class
