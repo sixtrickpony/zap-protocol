@@ -115,6 +115,31 @@ class ModeSelector : public Stream {
   uint8_t active_ = 0;
 };
 
+class Ident : public Stream {
+ public:
+  Ident(uint8_t pin, bool polarity = HIGH) : pin_(pin), polarity_(polarity) {
+    pinMode(pin_, OUTPUT);
+  }
+
+  void describe() { proto->writeRaw(F("class:ident")); }
+
+  int handleMessage(uint8_t frameType, char *data, int len) {
+    ZAP_PARSE_ARGS(data, len);
+
+    if (args.scanBool(&arg)) {
+      setEnabled(arg.B);
+      return 0;
+    } else {
+      return STR_ERR_INVALID_ARGUMENT;
+    }
+  }
+
+  bool setEnabled(bool isEnabled) { digitalWrite(pin_, isEnabled == polarity_); }
+
+ private:
+  uint8_t pin_;    // pin used for ident
+  bool polarity_;  // active polarity of ident pin
+};
 //
 // DeviceSelector is a simple implementation of the deviceSelect class,
 // allowing the device to expose a method for the user to physically

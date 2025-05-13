@@ -226,26 +226,6 @@ class Protocol : public BaseProtocol {
   }
 
   //
-  // Ident Pin
-
-  void setIdentPin(uint8_t pin, uint8_t polarity = HIGH) {
-    identPin_ = pin;
-    identPolarity_ = polarity;
-    pinMode(identPin_, OUTPUT);
-    digitalWrite(identPin_, !polarity);
-  }
-
-  void identOn() {
-    if (identPin_ == 0xFF) return;
-    digitalWrite(identPin_, identPolarity_);
-  }
-
-  void identOff() {
-    if (identPin_ == 0xFF) return;
-    digitalWrite(identPin_, !identPolarity_);
-  }
-
-  //
   // Main Protocol Handler
 
   void tick() {
@@ -376,15 +356,6 @@ class Protocol : public BaseProtocol {
           stream->describe();
         }
       }
-    } else if (streq(STR_IDENT, arg.S) == 0) {
-      if (!p.scanBool(&arg)) {
-        err = 2;
-      } else if (arg.B) {
-        identOn();
-      } else {
-        identOff();
-      }
-      writeOK();
     } else {
       err = 1;
     }
@@ -506,10 +477,6 @@ class Protocol : public BaseProtocol {
   // Index 0 is logical stream 1 since the control stream is implemented
   // by the Protocol class itself.
   Stream *streams_[MaxUserStreamCount] = {0};
-
-  // Ident
-  uint8_t identPin_ = 0xFF;    // Pin for ident LED; set to 0xFF (disabled) by default
-  bool identPolarity_ = true;  // Active polarity of ident pin
 
   // Device info
   IndifferentString deviceInfo_;

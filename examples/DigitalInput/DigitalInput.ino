@@ -13,15 +13,13 @@ private:
   uint8_t pin_;
 };
 
-// Instantiate protocol components
-const char deviceInfo[] PROGMEM =
-    "vendor:\"Test\" product:\"Digital Sensor\" id:\"com.example.digitalSensor\"";
-
-// Template argument is number of slots to reserve for user streams
-zap::Protocol<4,48> protocol(&Serial, (__FlashStringHelper *)deviceInfo);
-
 AnalogSensor sensor1(1);
 AnalogSensor sensor2(2);
+
+//
+// Ident
+
+zap::Ident ident(LED_BUILTIN, HIGH);
 
 //
 // Mode Selection
@@ -49,6 +47,13 @@ ModeSelector modeSelector;
 #define SELECT_PIN 8
 zap::DeviceSelector deviceSelector(SELECT_PIN, INPUT_PULLUP);
 
+// Instantiate protocol components
+const char deviceInfo[] PROGMEM =
+    "vendor:\"Test\" product:\"Digital Sensor\" id:\"com.example.digitalSensor\"";
+
+// Template argument is number of slots to reserve for user streams
+zap::Protocol<5,48> protocol(&Serial, (__FlashStringHelper *)deviceInfo);
+
 //
 //
 
@@ -58,13 +63,11 @@ void setup() {
   while (!Serial) {}
 
   // Register streams
-  protocol.setStreamHandler(1, &modeSelector);
-  protocol.setStreamHandler(2, &deviceSelector);
-  protocol.setStreamHandler(3, &sensor1);
-  protocol.setStreamHandler(4, &sensor2);
-
-  // Set up device identification
-  protocol.setIdentPin(LED_BUILTIN);
+  protocol.setStreamHandler(1, &ident);
+  protocol.setStreamHandler(2, &modeSelector);
+  protocol.setStreamHandler(3, &deviceSelector);
+  protocol.setStreamHandler(4, &sensor1);
+  protocol.setStreamHandler(5, &sensor2);
 
   // Start the protocol
   protocol.begin();
