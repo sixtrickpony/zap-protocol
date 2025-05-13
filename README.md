@@ -18,7 +18,7 @@ private:
 };
 
 // Device identification string, sent in response to `hello` commands
-const char deviceInfo[] PROGMEM = F("vendor:\"Test\" product:\"My Cool Sensor\" id:\"com.example.myCoolSensor\"");
+const char deviceInfo[] PROGMEM = "vendor:\"Test\" product:\"My Cool Sensor\" id:\"com.example.myCoolSensor\"";
 
 // Main protocol handler
 // template arg 0 - maximum number of streams that can be registerd

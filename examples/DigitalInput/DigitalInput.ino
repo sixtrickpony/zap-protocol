@@ -12,7 +12,7 @@ private:
 
 // Instantiate protocol components
 const char deviceInfo[] PROGMEM =
-    F("vendor:\"Test\" product:\"Digital Sensor\" id:\"com.example.digitalSensor\"");
+    "vendor:\"Test\" product:\"Digital Sensor\" id:\"com.example.digitalSensor\"";
 
 // Template argument is number of slots to reserve for user streams
 zap::Protocol<4,48> protocol(&Serial, (__FlashStringHelper *)deviceInfo);
