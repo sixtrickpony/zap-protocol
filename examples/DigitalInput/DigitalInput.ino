@@ -2,24 +2,24 @@
 
 class AnalogSensor : public zap::ScalarSensorStream<uint16_t> {
  public:
-  void tick() { setValue(analogRead(1)); }
+  AnalogSensor(uint8_t pin) : pin_(pin) {}
+  void tick() { setValue(analogRead(pin_)); }
   void describe() { proto->writeRaw(F("name:analogSensor class:sensor value:[x] min:0 max:1023")); }
   void report() { proto->port()->print(value(), DEC); }
+private:
+  uint8_t pin_;
 };
-
-// Protocol buffers for RX/TX
-
-#define RX_BUFFER_SIZE 48
-char rx_buffer[RX_BUFFER_SIZE];
 
 // Instantiate protocol components
 const char deviceInfo[] PROGMEM =
-    "vendor:\"Test\" product:\"Digital Sensor\" id:\"com.example.digitalSensor\"";
+    F("vendor:\"Test\" product:\"Digital Sensor\" id:\"com.example.digitalSensor\"");
 
 // Template argument is number of slots to reserve for user streams
-zap::Protocol<3> protocol(&Serial, rx_buffer, RX_BUFFER_SIZE, (__FlashStringHelper *)deviceInfo);
+zap::Protocol<4,48> protocol(&Serial, (__FlashStringHelper *)deviceInfo);
 
-AnalogSensor sensor;
+AnalogSensor sensor1(1);
+AnalogSensor sensor2(2);
+
 
 #define SELECT_PIN 8
 
@@ -50,7 +50,8 @@ void setup() {
   // Register the digital IO as stream ID and initialise the protocol
   protocol.setStreamHandler(1, &modeSelector);
   protocol.setStreamHandler(2, &deviceSelector);
-  protocol.setStreamHandler(3, &sensor);
+  protocol.setStreamHandler(3, &sensor1);
+  protocol.setStreamHandler(4, &sensor2);
   protocol.setIdentPin(LED_BUILTIN);
   protocol.begin();
 }
@@ -59,6 +60,7 @@ void loop() {
   // Every tick round the loop we update the sensor state and tick the protocol
   // to handle comms and periodic reporting.
   deviceSelector.tick();
-  sensor.tick();
+  sensor1.tick();
+  sensor2.tick();
   protocol.tick();
 }

@@ -6,31 +6,43 @@ through a single serial link. Each stream on a Zap-enabled device supports
 ```c++
 #include "Zap.hpp"
 
-#define RX_BUFFER_SIZE 48
-char rx_buffer[RX_BUFFER_SIZE];
-
-class AnalogSensor : public zap::ScalarSensorStream<uint8_t> {
+// Define basic sensor class for reading from an analog pin
+class AnalogSensor : public zap::ScalarSensorStream<uint16_t> {
  public:
-  void tick() { setValue(analogRead(1)); }
+  AnalogSensor(uint8_t pin) : pin_(pin) {}
+  void tick() { setValue(analogRead(pin_)); }
   void describe() { proto->writeRaw(F("name:analogSensor class:sensor value:[x] min:0 max:1023")); }
   void report() { proto->port()->print(value(), DEC); }
+private:
+  uint8_t pin_;
 };
 
-const char deviceInfo[] PROGMEM = "vendor:\"Test\" product:\"MyCoolSensor\" id:\"com.example.myCoolSensor\"";
+// Device identification string, sent in response to `hello` commands
+const char deviceInfo[] PROGMEM = F("vendor:\"Test\" product:\"My Cool Sensor\" id:\"com.example.myCoolSensor\"");
 
-zap::Protocol<1> protocol(&Serial, rx_buffer, RX_BUFFER_SIZE, (__FlashStringHelper *)deviceInfo);
-AnalogSensor sensor;
+// Main protocol handler
+// template arg 0 - maximum number of streams that can be registerd
+// template arg 1 - command decode buffer size
+zap::Protocol<2,48> protocol(&Serial, deviceInfo);
+
+// Define two ADC sensors reading from pins 1 & 2
+AnalogSensor sensor1(1);
+AnalogSensor sensor2(2);
 
 void setup() {
   Serial.begin(115200);
   while (!Serial) {}
 
-  protocol.setStreamHandler(1, &sensor);
+  // Register both sensors with the protocol
+  protocol.setStreamHandler(1, &sensor1);
+  protocol.setStreamHandler(2, &sensor2);
   protocol.begin();
 }
 
 void loop() {
-  sensor.tick();
+  // Tick everything on each loop
+  sensor1.tick();
+  sensor2.tick();
   protocol.tick();
 }
 ```

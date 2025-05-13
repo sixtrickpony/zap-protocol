@@ -202,22 +202,17 @@ class BaseProtocol {
   ::Stream *port_;
 };
 
-template <uint8_t N = 14>
+template <uint8_t N = 14, uint8_t B = 64>
 class Protocol : public BaseProtocol {
  public:
-  Protocol(::Stream *port, char *rxBuffer, int rxBufferSize,
-           const IndifferentString deviceInfo)
-      : BaseProtocol(port),
-        rxBuffer_(rxBuffer),
-        rxBufferSize_(rxBufferSize),
-        deviceInfo_(deviceInfo) {}
+  Protocol(::Stream *port, const IndifferentString deviceInfo)
+      : BaseProtocol(port), deviceInfo_(deviceInfo) {}
 
-  Protocol(::Stream *port, char *rxBuffer, int rxBufferSize, const char *deviceInfo)
-      : Protocol(port, rxBuffer, rxBufferSize, IndifferentString(deviceInfo)) {}
+  Protocol(::Stream *port, const char *deviceInfo)
+      : Protocol(port, IndifferentString(deviceInfo)) {}
 
-  Protocol(::Stream *port, char *rxBuffer, int rxBufferSize,
-           const __FlashStringHelper *deviceInfo)
-      : Protocol(port, rxBuffer, rxBufferSize, IndifferentString(deviceInfo)) {}
+  Protocol(::Stream *port, const __FlashStringHelper *deviceInfo)
+      : Protocol(port, IndifferentString(deviceInfo)) {}
 
   void begin() {}
 
@@ -498,8 +493,7 @@ class Protocol : public BaseProtocol {
   }
 
   // Receive buffer and state
-  char *rxBuffer_;       // Buffer
-  int rxBufferSize_;     // Size of buffer in bytes
+  char rxBuffer_[B];     // Buffer
   uint8_t rxState_ = 0;  // Receive state
   int rxWp_ = 0;         // Write pointer
 
