@@ -66,7 +66,7 @@ class ModeSelector : public Stream {
     ZAP_PARSE_ARGS(data, len);
 
     if (!args.scanWord(&arg)) {
-      return STR_ERR_INVALID_ARGUMENT;
+      return STR_ERR_INVALID_ARG;
     }
 
     if (streq(STR_MODE, arg.S)) {
@@ -76,7 +76,7 @@ class ModeSelector : public Stream {
       } else if (args.scanWord(&arg)) {
         uint8_t requestedMode = findModeByName(arg.S);
         if (requestedMode == 0xFF) {
-          return STR_ERR_INVALID_ARGUMENT;
+          return STR_ERR_UNKNOWN_ENTITY;
         } else if (requestedMode != active_) {
           int res = setMode(active_, requestedMode);
           if (res >= 0) {
@@ -90,10 +90,10 @@ class ModeSelector : public Stream {
           }
         }
       } else {
-        return STR_ERR_INVALID_ARGUMENT;
+        return STR_ERR_INVALID_ARG;
       }
     } else {
-      return STR_ERR_INVALID_ARGUMENT;
+      return STR_ERR_UNKNOWN_COMMAND;
     }
   }
 
@@ -130,7 +130,7 @@ class Ident : public Stream {
       setEnabled(arg.B);
       return 0;
     } else {
-      return STR_ERR_INVALID_ARGUMENT;
+      return STR_ERR_INVALID_ARG;
     }
   }
 
@@ -182,7 +182,7 @@ class DeviceSelector : public Stream {
       setEnabled(arg.B);
       return 0;
     } else {
-      return STR_ERR_INVALID_ARGUMENT;
+      return STR_ERR_INVALID_ARG;
     }
   }
 
@@ -238,12 +238,12 @@ class ScalarSensorStream : public Stream {
     ZAP_PARSE_ARGS(data, len);
 
     if (!args.scanWord(&arg)) {
-      return STR_ERR_INVALID_ARGUMENT;
+      return STR_ERR_INVALID_ARG;
     }
 
     if (streq(STR_READ, arg.S) == 0) {
       if (!valid_) {
-        return STR_ERR_INVALID_ARGUMENT;
+        return STR_ERR_NO_VALUE;
       } else {
         proto->writeRawSpace(STR_READ);
         report();
@@ -264,10 +264,8 @@ class ScalarSensorStream : public Stream {
         }
         return 0;
       } else {
-        return STR_ERR_INVALID_ARGUMENT;
+        return STR_ERR_INVALID_ARG;
       }
-
-      return STR_ERR_INVALID_ARGUMENT;
     }
 
     if (streq(STR_SET, arg.S) == 0) {
@@ -284,7 +282,7 @@ class ScalarSensorStream : public Stream {
       return commitConfig(aborted) ? 0 : -1;
     }
 
-    return STR_ERR_INVALID_ARGUMENT;
+    return STR_ERR_UNKNOWN_COMMAND;
   }
 
   // Override this method to implement custom enable/disable logic, e.g.

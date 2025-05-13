@@ -314,23 +314,20 @@ class Protocol : public BaseProtocol {
   }
 
   void onControlStreamFrame(char *data, int len) {
-    ArgParser p(data, len);
-    Arg arg;
+    ZAP_PARSE_ARGS(data, len);
     int err = 0;
 
     startMessage(0);
 
-    if (!p.scanWord(&arg)) {
-      err = 1;
+    if (!args.scanWord(&arg)) {
+      err = STR_ERR_INVALID_ARG;
     } else if (streq(STR_REPORT, arg.S) == 0) {
-      updateReporting(&p);
+      updateReporting(&args);
     } else if (streq(STR_HELLO, arg.S) == 0) {
-      writeRaw(STR_HELLO);
-      port_->print(' ');
+      writeRawSpace(STR_HELLO);
       writeRaw(deviceInfo_);
     } else if (streq(STR_STREAMS, arg.S) == 0) {
-      writeRaw(STR_STREAMS);
-      port_->print(' ');
+      writeRawSpace(STR_STREAMS);
       bool first = true;
       for (int id = 1; id <= MaxUserStreamCount; id++) {
         if (streams_[id - 1] == nullptr) continue;
@@ -343,12 +340,12 @@ class Protocol : public BaseProtocol {
         }
       }
     } else if (streq(STR_DESC, arg.S) == 0) {
-      if (!p.scanInt(&arg)) {
-        err = 2;
+      if (!args.scanInt(&arg)) {
+        err = STR_ERR_INVALID_ARG;
       } else {
         Stream *stream = lookupStreamByID(arg.I);
         if (stream == nullptr) {
-          err = 4;
+          err = STR_ERR_UNKNOWN_ENTITY;
         } else {
           writeRawSpace(STR_DESC);
           port_->print(arg.I, HEX);
@@ -357,22 +354,21 @@ class Protocol : public BaseProtocol {
         }
       }
     } else {
-      err = 1;
+      err = STR_ERR_UNKNOWN_COMMAND;
     }
 
     if (err != 0) {
-      port_->print("error:");
-      port_->print(err, DEC);
+      writeError(err);
     }
 
     endFrame();
   }
 
   void onStreamFrame(uint8_t streamID, uint8_t frameType, char *data, int len) {
-    Stream *stream = lookupStreamByID(streamID);
     startMessage(streamID);
+    Stream *stream = lookupStreamByID(streamID);
     if (stream == nullptr) {
-      writeError(STR_ERR_INVALID_STREAM_ID);
+      writeError(STR_ERR_INVALID_STREAM);
     } else {
       int res = stream->handleMessage(frameType, data, len);
       if (res == 0) {
@@ -388,7 +384,7 @@ class Protocol : public BaseProtocol {
     Arg arg;
 
     if (!p->scanBool(&arg)) {
-      writeError(STR_ERR_INVALID_ARGUMENT);
+      writeError(STR_ERR_INVALID_ARG);
       return;
     }
 
@@ -399,7 +395,7 @@ class Protocol : public BaseProtocol {
     }
 
     if (!p->scanInt(&arg)) {
-      writeError(STR_ERR_INVALID_ARGUMENT);
+      writeError(STR_ERR_INVALID_ARG);
       return;
     }
 
@@ -411,12 +407,12 @@ class Protocol : public BaseProtocol {
     } else {
       while (!p->end()) {
         if (!p->scanInt(&arg)) {
-          writeError(STR_ERR_INVALID_ARGUMENT);
+          writeError(STR_ERR_INVALID_ARG);
           return;
         }
         uint8_t streamIndex = arg.I - 1;
         if (streamIndex >= MaxUserStreamCount || !streams_[streamIndex]) {
-          writeError(STR_ERR_INVALID_STREAM_ID);
+          writeError(STR_ERR_UNKNOWN_ENTITY);
           return;
         }
         requestedStreams |= (1 << streamIndex);
