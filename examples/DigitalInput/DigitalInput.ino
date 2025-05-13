@@ -1,5 +1,8 @@
 #include "Zap.hpp"
 
+//
+// Analog Sensors
+
 class AnalogSensor : public zap::ScalarSensorStream<uint16_t> {
  public:
   AnalogSensor(uint8_t pin) : pin_(pin) {}
@@ -20,8 +23,8 @@ zap::Protocol<4,48> protocol(&Serial, (__FlashStringHelper *)deviceInfo);
 AnalogSensor sensor1(1);
 AnalogSensor sensor2(2);
 
-
-#define SELECT_PIN 8
+//
+// Mode Selection
 
 char *modeNames[2] = {
   "mode-1",
@@ -39,20 +42,31 @@ protected:
 };
 
 ModeSelector modeSelector;
+
+//
+// Device Selection
+
+#define SELECT_PIN 8
 zap::DeviceSelector deviceSelector(SELECT_PIN, INPUT_PULLUP);
 
+//
+//
+
 void setup() {
+  // Init serial port
   Serial.begin(115200);
   while (!Serial) {}
 
-  pinMode(1, INPUT);
-
-  // Register the digital IO as stream ID and initialise the protocol
+  // Register streams
   protocol.setStreamHandler(1, &modeSelector);
   protocol.setStreamHandler(2, &deviceSelector);
   protocol.setStreamHandler(3, &sensor1);
   protocol.setStreamHandler(4, &sensor2);
+
+  // Set up device identification
   protocol.setIdentPin(LED_BUILTIN);
+
+  // Start the protocol
   protocol.begin();
 }
 
