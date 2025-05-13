@@ -11,9 +11,9 @@ char rx_buffer[RX_BUFFER_SIZE];
 
 class AnalogSensor : public zap::ScalarSensorStream<uint8_t> {
  public:
-  void report() { proto->port()->print(value() ? 1 : 0, DEC); }
   void tick() { setValue(analogRead(1)); }
-  void describe() { proto->writeRaw(F("name:analogSensor class:sensor value:[v] min:0 max:1023")); }
+  void describe() { proto->writeRaw(F("name:analogSensor class:sensor value:[x] min:0 max:1023")); }
+  void report() { proto->port()->print(value(), DEC); }
 };
 
 const char deviceInfo[] PROGMEM = "vendor:\"Test\" product:\"MyCoolSensor\" id:\"com.example.myCoolSensor\"";
