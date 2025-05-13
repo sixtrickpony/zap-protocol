@@ -202,7 +202,7 @@ class BaseProtocol {
   ::Stream *port_;
 };
 
-template <uint8_t N = 14, uint8_t B = 64>
+template <uint8_t MaxUserStreamCount = 14, uint8_t RXBufferSize = 64>
 class Protocol : public BaseProtocol {
  public:
   Protocol(::Stream *port, const IndifferentString deviceInfo)
@@ -220,7 +220,7 @@ class Protocol : public BaseProtocol {
   // Streams
 
   void setStreamHandler(int id, Stream *handler) {
-    if (id < 1 || id > N) return;
+    if (id < 1 || id > MaxUserStreamCount) return;
     handler->setProtocol(this, id);
     streams_[id - 1] = handler;
   }
@@ -281,7 +281,7 @@ class Protocol : public BaseProtocol {
       uint32_t now = millis();
       if (now >= nextReportAt_) {
         nextReportAt_ += reportInterval_;
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < MaxUserStreamCount; i++) {
           if (reportStreams_ & (1 << i) && streams_[i]->shouldReport()) {
             startNotification(i + 1);
             writeRaw(F("report "));
@@ -352,7 +352,7 @@ class Protocol : public BaseProtocol {
       writeRaw(STR_STREAMS);
       port_->print(' ');
       bool first = true;
-      for (int id = 1; id <= N; id++) {
+      for (int id = 1; id <= MaxUserStreamCount; id++) {
         if (streams_[id - 1] == nullptr) continue;
         if (!first) writeSpace();
         first = false;
@@ -444,7 +444,7 @@ class Protocol : public BaseProtocol {
           return;
         }
         uint8_t streamIndex = arg.I - 1;
-        if (streamIndex >= N || !streams_[streamIndex]) {
+        if (streamIndex >= MaxUserStreamCount || !streams_[streamIndex]) {
           writeError(STR_ERR_INVALID_STREAM_ID);
           return;
         }
@@ -453,7 +453,7 @@ class Protocol : public BaseProtocol {
     }
 
     reportStreams_ = 0;
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < MaxUserStreamCount; i++) {
       if ((requestedStreams & (1 << i)) && streams_[i] && streams_[i]->canReport()) {
         reportStreams_ |= (1 << i);
       }
@@ -466,7 +466,7 @@ class Protocol : public BaseProtocol {
   }
 
   Stream *lookupStreamByID(uint8_t streamID) {
-    if (streamID < 1 || streamID > N) return nullptr;
+    if (streamID < 1 || streamID > MaxUserStreamCount) return nullptr;
     return streams_[streamID - 1];
   }
 
@@ -493,9 +493,9 @@ class Protocol : public BaseProtocol {
   }
 
   // Receive buffer and state
-  char rxBuffer_[B];     // Buffer
-  uint8_t rxState_ = 0;  // Receive state
-  int rxWp_ = 0;         // Write pointer
+  char rxBuffer_[RXBufferSize];  // Buffer
+  uint8_t rxState_ = 0;          // Receive state
+  int rxWp_ = 0;                 // Write pointer
 
   // Report configuration
   uint16_t reportInterval_ = 0;  // interval (ms)
@@ -505,7 +505,7 @@ class Protocol : public BaseProtocol {
   // Stream implementations
   // Index 0 is logical stream 1 since the control stream is implemented
   // by the Protocol class itself.
-  Stream *streams_[N] = {0};
+  Stream *streams_[MaxUserStreamCount] = {0};
 
   // Ident
   uint8_t identPin_ = 0xFF;    // Pin for ident LED; set to 0xFF (disabled) by default
