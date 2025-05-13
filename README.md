@@ -1,7 +1,39 @@
 # zap protocol
 
 Zap is a text-based protocol allowing multiple independent _streams_ to be multiplexed
-through a single serial link. Each stream on a Zap-enabled device supports 
+through a single serial link. Each stream on a Zap-enabled device supports
+
+```c++
+#include "Zap.hpp"
+
+#define RX_BUFFER_SIZE 48
+char rx_buffer[RX_BUFFER_SIZE];
+
+class AnalogSensor : public zap::ScalarSensorStream<uint8_t> {
+ public:
+  void report() { proto->port()->print(value() ? 1 : 0, DEC); }
+  void tick() { setValue(analogRead(1)); }
+  void describe() { proto->writeRaw(F("name:analogSensor class:sensor value:[v] min:0 max:1023")); }
+};
+
+const char deviceInfo[] PROGMEM = "vendor:\"Test\" product:\"MyCoolSensor\" id:\"com.example.myCoolSensor\"";
+
+zap::Protocol<1> protocol(&Serial, rx_buffer, RX_BUFFER_SIZE, (__FlashStringHelper *)deviceInfo);
+AnalogSensor sensor;
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial) {}
+
+  protocol.setStreamHandler(1, &sensor);
+  protocol.begin();
+}
+
+void loop() {
+  sensor.tick();
+  protocol.tick();
+}
+```
 
 ## Example Session
 
