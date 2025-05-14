@@ -67,37 +67,53 @@ class ModeSelector : public Stream {
 
     if (!args.scanWord(&arg)) {
       return STR_ERR_INVALID_ARG;
-    }
-
-    if (streq(STR_MODE, arg.S)) {
-      if (args.end()) {
-        proto->writeRawSpace(STR_MODE);
-        proto->writeRaw(names_[active_]);
-      } else if (args.scanWord(&arg)) {
-        uint8_t requestedMode = findModeByName(arg.S);
-        if (requestedMode == 0xFF) {
-          return STR_ERR_UNKNOWN_ENTITY;
-        } else if (requestedMode != active_) {
-          int res = setMode(active_, requestedMode);
-          if (res >= 0) {
-            active_ = requestedMode;
-            if (res == 0) {
-              return 0;
-            } else {
-              proto->writeOK(res);
-              return -1;
-            }
-          }
-        }
-      } else {
-        return STR_ERR_INVALID_ARG;
-      }
-    } else {
+    } else if (!streq(STR_MODE, arg.S)) {
       return STR_ERR_UNKNOWN_COMMAND;
     }
+
+    // Query current mode
+    if (args.end()) {
+      proto->writeRawSpace(STR_MODE);
+      proto->writeRaw(names_[active_]);
+      return -1;
+    }
+
+    if (!args.scanWord(&arg)) {
+      return STR_ERR_INVALID_ARG;
+    }
+
+    uint8_t requestedMode = findModeByName(arg.S);
+    if (requestedMode == 0xFF) {
+      return STR_ERR_UNKNOWN_ENTITY;
+    }
+
+    if (requestedMode == active_) {
+      // FIXME: this isn't strictly correct; if the previous mode change
+      // resulted in a wait state, and this mode change was received before
+      // the wait time has elapsed, we should really return the remaining
+      // amount of wait time.
+      return 0;
+    }
+
+    int res = setMode(active_, requestedMode);
+    if (res < 0) {
+      return -1;
+    }
+
+    active_ = requestedMode;
+    proto->writeOK(res);
+    return -1;
   }
 
  protected:
+  // Override this methods to implement mode switching.
+  // setMode() will only be invoked when currentMode != newMode
+  //
+  // Return values:
+  // 0 => mode change OK
+  // >0 => mode change OK, return value is milliseconds client should wait
+  //       before invoking any further operations.
+  // <0 => error; setMode() is responsible for writing error
   virtual int setMode(uint8_t currentMode, uint8_t newMode) = 0;
 
  private:
@@ -321,5 +337,4 @@ class ScalarSensorStream : public Stream {
   bool valid_;
   T value_;
 };
-
 };  // namespace zap

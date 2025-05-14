@@ -122,9 +122,12 @@ class BaseProtocol {
   void writeOK() { writeRaw(STR_OK); }
 
   void writeOK(int wait) {
-    writeRawSpace(STR_OK);
-    writeKey(STR_WAIT);
-    port_->print(wait, DEC);
+    writeOK();
+    if (wait > 0) {
+      writeSpace();
+      writeKey(STR_WAIT);
+      port_->print(wait, DEC);
+    }
   }
 
   void writeBinaryBody(char *data, int len) {
